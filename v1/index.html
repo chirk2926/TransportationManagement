@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>運送状況・経路・商品・到着管理システム</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      text-align: center;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .main-container {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .left-panel {
+      flex: 1.5;
+    }
+
+    .right-panel {
+      flex: 1;
+    }
+
+    .section {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* タイムライン */
+    .timeline {
+      position: relative;
+      list-style-type: none;
+      margin: 0;
+      padding: 20px 0 20px 60px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 30px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #ccc;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 40px;
+    }
+    .timeline-item:last-child {
+      margin-bottom: 0;
+    }
+    .timeline-marker {
+      position: absolute;
+      left: -42px;
+      top: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 3px solid black;
+      background-color: white;
+    }
+    .timeline-marker.active {
+      border-color: red;
+      background-color: red;
+    }
+    .timeline-content {
+      font-size: 18px;
+      color: #333;
+    }
+
+    /* ボタン */
+    .button-group {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: #007BFF;
+      color: white;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    /* 選択状態のスタイル（倉庫業者側ボタン用） */
+    .selected {
+      background-color: #28a745 !important;
+    }
+
+    /* 商品情報エリア */
+    #productList .product-item {
+      border: 1px solid #ccc;
+      margin: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #fafafa;
+    }
+    #productList .product-item img {
+      max-width: 100%;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    /* 入力フォーム */
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    /* モーダルウィンドウ共通 */
+    .modal {
+      display: none; /* 初期は非表示 */
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 500px;
+      border: 1px solid #888;
+      border-radius: 8px;
+    }
+
+    /* 到着情報表示エリア */
+    #arrivalInfo {
+      font-size: 18px;
+      padding: 10px;
+    }
+
+    /* 右下固定OPERATIONボタン */
+    #operationBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 200;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>運送状況と管理システム</h1>
+    <div class="main-container">
+      
+      <!-- 左パネル：運送経路と到着情報 -->
+      <div class="left-panel">
+        <div class="section">
+          <h2>運送経路</h2>
+          <!-- タイムラインはJavaScriptで動的に作成 -->
+          <ul class="timeline" id="timeline"></ul>
+          <div class="button-group">
+            <button id="upBtn">UP</button>
+            <button id="downBtn">DOWN</button>
+            <button id="changeRouteBtn">輸送経路変更</button>
+            <button id="delayBtn">遅延情報</button>
+            <button id="arrivalTimeBtn">到着時間</button>
+          </div>
+        </div>
+        <div class="section" id="arrivalInfoSection">
+          <h2>到着情報</h2>
+          <div id="arrivalInfo">未入力</div>
+        </div>
+      </div>
+      
+      <!-- 右パネル：商品情報 -->
+      <div class="right-panel">
+        <div class="section">
+          <h2>商品情報</h2>
+          <div class="button-group">
+            <button id="addProductBtn">商品追加</button>
+          </div>
+          <div id="productList"><!-- 商品追加後の情報が表示されます --></div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- 各種モーダル -->
+
+  <!-- 輸送経路変更モーダル -->
+  <div id="routeModal" class="modal">
+    <div class="modal-content">
+      <h2>輸送経路変更</h2>
+      <label for="routeInput">各地点を改行区切りで入力してください</label>
+      <textarea id="routeInput"></textarea>
+      <div class="button-group">
+        <button id="saveRouteBtn">保存</button>
+        <button id="cancelRouteBtn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遅延情報モーダル -->
+  <div id="delayModal" class="modal">
+    <div class="modal-content">
+      <h2>遅延情報</h2>
+      <p>現在、輸送に遅延が発生しています。下記の対策から選択してください。</p>
+      <div class="button-group">
+        <button id="backToWarehouseBtn">倉庫に戻る</button>
+        <button id="continueTransportBtn">引き続き運送する</button>
+        <button id="tempStoreBtn">近くの倉庫に一時保管する</button>
+        <button id="cancelDelayBtn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 商品追加モーダル -->
+  <div id="productModal" class="modal">
+    <div class="modal-content">
+      <h2>商品追加</h2>
+      <div class="form-group">
+        <label for="productName">商品名</label>
+        <input type="text" id="productName" placeholder="商品名">
+      </div>
+      <div class="form-group">
+        <label for="productSize">大きさ</label>
+        <input type="text" id="productSize" placeholder="大きさ">
+      </div>
+      <div class="form-group">
+        <label for="productWeight">重さ</label>
+        <input type="text" id="productWeight" placeholder="重さ">
+      </div>
+      <div class="form-group">
+        <label for="productQuantity">数量</label>
+        <input type="number" id="productQuantity" placeholder="数量">
+      </div>
+      <div class="form-group">
+        <label for="productFrozen">冷凍</label>
+        <input type="checkbox" id="productFrozen">
+      </div>
+      <div class="form-group">
+        <label for="productTransportDate">輸送日にち</label>
+        <input type="date" id="productTransportDate">
+      </div>
+      <div class="form-group">
+        <label for="productNote">備考</label>
+        <textarea id="productNote" placeholder="備考"></textarea>
+      </div>
+      <!-- 画像アップロード追加部分 -->
+      <div class="form-group">
+        <label for="productImageFile">画像アップロード</label>
+        <input type="file" id="productImageFile" accept="image/*">
+        <img id="productImagePreview" src="" alt="画像プレビュー" style="max-width:100%; display:none; margin-top:10px;">
+      </div>
+      <div class="button-group">
+        <button id="saveProductBtn">保存</button>
+        <button id="cancelProductBtn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 到着時間モーダル -->
+  <div id="arrivalModal" class="modal">
+    <div class="modal-content">
+      <h2>到着時間情報入力</h2>
+      <div class="form-group">
+        <label for="arrivalHours">到着予定 時間 (時間)</label>
+        <input type="number" id="arrivalHours" min="0" placeholder="時間">
+      </div>
+      <div class="form-group">
+        <label for="arrivalMinutes">到着予定 分 (分)</label>
+        <input type="number" id="arrivalMinutes" min="0" max="59" placeholder="分">
+      </div>
+      <div class="form-group">
+        <label for="delayInput">遅延 (分)</label>
+        <input type="number" id="delayInput" min="0" placeholder="遅延分">
+      </div>
+      <div class="form-group">
+        <h3>倉庫業者入力</h3>
+        <button id="warehouseOKBtn">準備OK</button>
+        <button id="warehouseOverloadBtn">負荷</button>
+      </div>
+      <div class="button-group">
+        <button id="saveArrivalBtn">保存</button>
+        <button id="cancelArrivalBtn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPERATIONモーダル -->
+  <div id="operationModal" class="modal">
+    <div class="modal-content">
+      <h2>OPERATION</h2>
+      <div class="form-group">
+        <button id="resetProductBtn">商品情報リセット</button>
+      </div>
+      <div class="form-group">
+        <button id="resetArrivalBtn">到着情報・遅延情報リセット</button>
+      </div>
+      <div class="form-group">
+        <label>現在位置操作</label>
+        <button id="opUpBtn">UP</button>
+        <button id="opDownBtn">DOWN</button>
+      </div>
+      <div class="button-group">
+        <button id="closeOperationModalBtn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右下固定のOPERATIONボタン -->
+  <button id="operationBtn">OPERATION</button>
+
+  <script>
+    /* ============================
+         運送経路（タイムライン）関連
+       ============================ */
+    let routeSteps = ["注文者", "冷凍倉庫", "物流拠点", "到着地"];
+    let currentIndex = 0;
+    let timelineMarkers = [];
+
+    // タイムライン再描画
+    function renderTimeline() {
+      const timeline = document.getElementById("timeline");
+      timeline.innerHTML = "";
+      routeSteps.forEach((step, index) => {
+        timeline.innerHTML += `
+          <li class="timeline-item" data-index="${index}">
+            <div class="timeline-marker" id="marker-${index}"></div>
+            <div class="timeline-content">${step}</div>
+          </li>
+        `;
+      });
+      timelineMarkers = document.querySelectorAll(".timeline-marker");
+      if (currentIndex < 0 || currentIndex >= timelineMarkers.length) {
+        currentIndex = 0;
+      }
+      timelineMarkers[currentIndex].classList.add("active");
+    }
+    renderTimeline();
+
+    // 現在位置操作の共通処理
+    function moveUp() {
+      if (currentIndex > 0) {
+        timelineMarkers[currentIndex].classList.remove("active");
+        currentIndex--;
+        timelineMarkers[currentIndex].classList.add("active");
+      }
+    }
+    function moveDown() {
+      if (currentIndex < timelineMarkers.length - 1) {
+        timelineMarkers[currentIndex].classList.remove("active");
+        currentIndex++;
+        timelineMarkers[currentIndex].classList.add("active");
+      }
+    }
+    document.getElementById("upBtn").addEventListener("click", moveUp);
+    document.getElementById("downBtn").addEventListener("click", moveDown);
+
+    /* ======================
+         輸送経路変更モーダル
+       ====================== */
+    const routeModal = document.getElementById("routeModal");
+    const routeInput = document.getElementById("routeInput");
+
+    document.getElementById("changeRouteBtn").addEventListener("click", () => {
+      routeInput.value = routeSteps.join("\n");
+      routeModal.style.display = "block";
+    });
+    document.getElementById("cancelRouteBtn").addEventListener("click", () => {
+      routeModal.style.display = "none";
+    });
+    document.getElementById("saveRouteBtn").addEventListener("click", () => {
+      const newSteps = routeInput.value.split("\n").map(step => step.trim()).filter(step => step !== "");
+      if (newSteps.length > 0) {
+        routeSteps = newSteps;
+        currentIndex = 0;
+        renderTimeline();
+      }
+      routeModal.style.display = "none";
+    });
+
+    /* ======================
+         遅延情報モーダル
+       ====================== */
+    const delayModal = document.getElementById("delayModal");
+
+    document.getElementById("delayBtn").addEventListener("click", () => {
+      delayModal.style.display = "block";
+    });
+    document.getElementById("cancelDelayBtn").addEventListener("click", () => {
+      delayModal.style.display = "none";
+    });
+    document.getElementById("backToWarehouseBtn").addEventListener("click", () => {
+      alert("「倉庫に戻る」を選択しました。");
+      delayModal.style.display = "none";
+    });
+    document.getElementById("continueTransportBtn").addEventListener("click", () => {
+      alert("「引き続き運送する」を選択しました。");
+      delayModal.style.display = "none";
+    });
+    document.getElementById("tempStoreBtn").addEventListener("click", () => {
+      alert("「近くの倉庫に一時保管する」を選択しました。");
+      delayModal.style.display = "none";
+    });
+
+    /* ======================
+         商品追加モーダル
+       ====================== */
+    const productModal = document.getElementById("productModal");
+    const productImageFile = document.getElementById("productImageFile");
+    const productImagePreview = document.getElementById("productImagePreview");
+
+    // 画像選択時、プレビュー表示
+    productImageFile.addEventListener("change", () => {
+      const file = productImageFile.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          productImagePreview.src = e.target.result;
+          productImagePreview.style.display = "block";
+        }
+        reader.readAsDataURL(file);
+      } else {
+        productImagePreview.src = "";
+        productImagePreview.style.display = "none";
+      }
+    });
+
+    document.getElementById("addProductBtn").addEventListener("click", () => {
+      productModal.style.display = "block";
+    });
+    document.getElementById("cancelProductBtn").addEventListener("click", () => {
+      productModal.style.display = "none";
+    });
+    document.getElementById("saveProductBtn").addEventListener("click", () => {
+      const name = document.getElementById("productName").value.trim();
+      const size = document.getElementById("productSize").value.trim();
+      const weight = document.getElementById("productWeight").value.trim();
+      const quantity = document.getElementById("productQuantity").value.trim();
+      const frozen = document.getElementById("productFrozen").checked;
+      const transportDate = document.getElementById("productTransportDate").value;
+      const note = document.getElementById("productNote").value.trim();
+
+      if (name === "") {
+        alert("商品名を入力してください。");
+        return;
+      }
+
+      // 商品追加処理（画像アップロードも考慮）
+      const addProduct = (imageHTML = "") => {
+        const productHTML = `
+          <div class="product-item">
+            ${imageHTML}
+            <h3>${name}</h3>
+            <p><strong>大きさ:</strong> ${size}</p>
+            <p><strong>重さ:</strong> ${weight}</p>
+            <p><strong>数量:</strong> ${quantity}</p>
+            <p><strong>冷凍:</strong> ${frozen ? "はい" : "いいえ"}</p>
+            <p><strong>輸送日にち:</strong> ${transportDate}</p>
+            <p><strong>備考:</strong> ${note}</p>
+          </div>
+        `;
+        document.getElementById("productList").innerHTML += productHTML;
+      };
+
+      if (productImageFile.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const imageHTML = `<img src="${e.target.result}" alt="${name} の画像">`;
+          addProduct(imageHTML);
+          resetProductInputs();
+        }
+        reader.readAsDataURL(productImageFile.files[0]);
+      } else {
+        addProduct();
+        resetProductInputs();
+      }
+    });
+
+    // 商品追加後、入力内容と画像プレビューのリセット処理
+    function resetProductInputs() {
+      document.getElementById("productName").value = "";
+      document.getElementById("productSize").value = "";
+      document.getElementById("productWeight").value = "";
+      document.getElementById("productQuantity").value = "";
+      document.getElementById("productFrozen").checked = false;
+      document.getElementById("productTransportDate").value = "";
+      document.getElementById("productNote").value = "";
+      productImageFile.value = "";
+      productImagePreview.src = "";
+      productImagePreview.style.display = "none";
+      productModal.style.display = "none";
+    }
+
+    /* ======================
+         到着時間モーダル
+       ====================== */
+    const arrivalModal = document.getElementById("arrivalModal");
+    let warehouseStatus = ""; // 「準備OK」または「負荷」
+
+    document.getElementById("arrivalTimeBtn").addEventListener("click", () => {
+      arrivalModal.style.display = "block";
+      document.getElementById("arrivalHours").value = "";
+      document.getElementById("arrivalMinutes").value = "";
+      document.getElementById("delayInput").value = "";
+      warehouseStatus = "";
+      document.getElementById("warehouseOKBtn").classList.remove("selected");
+      document.getElementById("warehouseOverloadBtn").classList.remove("selected");
+    });
+    document.getElementById("cancelArrivalBtn").addEventListener("click", () => {
+      arrivalModal.style.display = "none";
+    });
+    document.getElementById("warehouseOKBtn").addEventListener("click", () => {
+      warehouseStatus = "準備OK";
+      document.getElementById("warehouseOKBtn").classList.add("selected");
+      document.getElementById("warehouseOverloadBtn").classList.remove("selected");
+    });
+    document.getElementById("warehouseOverloadBtn").addEventListener("click", () => {
+      warehouseStatus = "負荷";
+      document.getElementById("warehouseOverloadBtn").classList.add("selected");
+      document.getElementById("warehouseOKBtn").classList.remove("selected");
+    });
+    document.getElementById("saveArrivalBtn").addEventListener("click", () => {
+      const hours = document.getElementById("arrivalHours").value;
+      const minutes = document.getElementById("arrivalMinutes").value;
+      const delay = document.getElementById("delayInput").value;
+      let infoText = "";
+
+      if (hours !== "" || minutes !== "") {
+        infoText += "到着予定: " + (hours ? hours : "0") + "時間 " + (minutes ? minutes : "0") + "分後";
+      }
+      if (delay !== "" && parseInt(delay) > 0) {
+        infoText += " | <span style='color: red;'>遅延: " + delay + "分</span>";
+      }
+      if (warehouseStatus !== "") {
+        infoText += " | 倉庫状況: " + warehouseStatus;
+      }
+      if (infoText === "") {
+        infoText = "到着情報が入力されていません。";
+      }
+
+      document.getElementById("arrivalInfo").innerHTML = infoText;
+      arrivalModal.style.display = "none";
+    });
+
+    /* ======================
+         OPERATIONモーダル
+       ====================== */
+    const operationModal = document.getElementById("operationModal");
+
+    document.getElementById("operationBtn").addEventListener("click", () => {
+      operationModal.style.display = "block";
+    });
+    document.getElementById("closeOperationModalBtn").addEventListener("click", () => {
+      operationModal.style.display = "none";
+    });
+    document.getElementById("resetProductBtn").addEventListener("click", () => {
+      if (confirm("商品情報をリセット（全消去）してもよろしいですか？")) {
+        document.getElementById("productList").innerHTML = "";
+      }
+    });
+    document.getElementById("resetArrivalBtn").addEventListener("click", () => {
+      document.getElementById("arrivalInfo").innerHTML = "未入力";
+    });
+    document.getElementById("opUpBtn").addEventListener("click", moveUp);
+    document.getElementById("opDownBtn").addEventListener("click", moveDown);
+
+    /* ======================
+         モーダル外クリックで閉じる処理
+       ====================== */
+    window.addEventListener("click", (event) => {
+      if (event.target === routeModal) {
+        routeModal.style.display = "none";
+      }
+      if (event.target === delayModal) {
+        delayModal.style.display = "none";
+      }
+      if (event.target === productModal) {
+        productModal.style.display = "none";
+      }
+      if (event.target === arrivalModal) {
+        arrivalModal.style.display = "none";
+      }
+      if (event.target === operationModal) {
+        operationModal.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>
