@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マニュアル</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <button id="back-button" class="back-button">戻る</button>
+    <h1>マニュアル確認システム</h1>
+    <button id="howto-button" class="howto-button">使い方</button>
+  </header>
+  <div class="container">
+    <!-- サイドバー：PDFマニュアル一覧 -->
+    <aside class="sidebar">
+      <ul id="manual-list">
+        <!-- JavaScriptでリスト項目を動的に追加 -->
+      </ul>
+    </aside>
+    <!-- メインエリア：PDF表示と共有ボタン -->
+    <main class="manual-display">
+      <div class="manual-content" id="manual-content">
+        <!-- 選択されたPDFの表示領域 -->
+      </div>
+      <button class="share-button" id="share-button">共有</button>
+    </main>
+  </div>
+  
+  <!-- 共有用モーダルパネル -->
+  <div id="share-panel" class="share-panel hidden">
+    <div class="share-panel-content">
+      <h2>共有オプション</h2>
+      <p>マニュアルを共有します</p>
+      <button id="download-pdf">PDFダウンロード</button>
+      <button id="copy-link">このページのリンクコピー</button>
+      <button id="send-email">メールで送信</button>
+      <button id="close-share-panel">閉じる</button>
+    </div>
+  </div>
+  
+  <!-- 使い方パネル -->
+  <div id="howto-panel" class="howto-panel hidden">
+    <div class="howto-panel-content">
+      <h2>使い方説明</h2>
+      <p>
+        左のバーのマニュアルを選択すると選択されたマニュアルを表示します。<br>
+        マニュアルを表示した状態で左下の共有ボタンをクリックするとファイルを共有できます。
+      </p>
+      <button id="close-howto-panel">閉じる</button>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
