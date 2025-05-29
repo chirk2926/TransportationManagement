@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>運送状況管理システム</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="main-container">
+    <!-- 左側：運送状況・経路・画像・遅延情報 -->
+    <div id="transport-container">
+      <h2>運送状況・経路</h2>
+      <!-- 輸送経路表示エリア -->
+      <div id="route-display">
+        <!-- 各拠点を円として表示。現在位置（class="current"）は内部を赤色に塗りつぶす -->
+        <div class="route-step" data-index="0">拠点1</div>
+        <div class="route-step current" data-index="1">拠点2</div>
+        <div class="route-step" data-index="2">拠点3</div>
+      </div>
+      <div class="buttons">
+        <button id="up-button">UP</button>
+        <button id="down-button">DOWN</button>
+      </div>
+      <!-- 輸送経路変更ボタンと UI -->
+      <button id="change-route-button">輸送経路変更</button>
+      <div id="route-change-ui" class="hidden">
+        <h3>輸送経路変更</h3>
+        <form id="route-change-form">
+          <label for="new-route">新しい経路情報:</label>
+          <input type="text" id="new-route" name="new-route">
+          <button type="submit">変更する</button>
+        </form>
+      </div>
+      
+      <h2>商品画像</h2>
+      <div id="product-image-display">
+        <!-- 仮のサンプル画像。必要に応じて動的に変更可能 -->
+        <img src="sample-product.jpg" alt="商品画像" id="product-image">
+      </div>
+      
+      <!-- 遅延情報 UI -->
+      <div id="delay-container">
+        <button id="delay-button">遅延情報</button>
+        <div id="delay-ui" class="hidden">
+          <h3>遅延情報</h3>
+          <button class="delay-option" data-option="return">倉庫に戻る</button>
+          <button class="delay-option" data-option="continue">引き続き運送する</button>
+          <button class="delay-option" data-option="store">近くの倉庫に一時保管する</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側：商品情報・商品追加・到着・遅延入力 -->
+    <div id="product-container">
+      <h2>商品情報</h2>
+      <div id="product-info">
+        <ul id="product-list"></ul>
+      </div>
+      <button id="add-product-button">商品追加</button>
+      <div id="add-product-ui" class="hidden">
+        <h3>商品追加</h3>
+        <form id="product-form">
+          <label>
+            商品名: <input type="text" id="product-name" name="product-name">
+          </label>
+          <label>
+            大きさ: <input type="text" id="product-size" name="product-size">
+          </label>
+          <label>
+            重さ: <input type="text" id="product-weight" name="product-weight">
+          </label>
+          <label>
+            数量: <input type="number" id="product-quantity" name="product-quantity">
+          </label>
+          <label>
+            冷凍:
+            <select id="product-frozen" name="product-frozen">
+              <option value="なし">なし</option>
+              <option value="あり">あり</option>
+            </select>
+          </label>
+          <label>
+            輸送日にち: <input type="date" id="transport-date" name="transport-date">
+          </label>
+          <label>
+            備考: <textarea id="product-remarks" name="product-remarks"></textarea>
+          </label>
+          <label>
+            画像アップロード: <input type="file" id="product-image-upload" accept="image/*">
+          </label>
+          <div id="image-preview"></div>
+          <button type="submit">追加する</button>
+        </form>
+      </div>
+
+      <!-- 到着時間・遅延・倉庫状況情報入力 UI -->
+      <div id="arrival-container">
+        <button id="arrival-button">到着時間</button>
+        <div id="arrival-ui" class="hidden">
+          <h3>到着・遅延情報入力</h3>
+          <form id="arrival-form">
+            <label>
+              到着までの時間:
+              <input type="number" id="arrival-hours" placeholder="時間" min="0"> 時間
+              <input type="number" id="arrival-minutes" placeholder="分" min="0"> 分
+            </label>
+            <label>
+              遅延時間(分): <input type="number" id="delay-minutes" min="0">
+            </label>
+            <label>
+              倉庫状況:
+              <select id="warehouse-status">
+                <option value="準備OK">準備OK</option>
+                <option value="負荷">負荷</option>
+              </select>
+            </label>
+            <button type="submit">情報更新</button>
+          </form>
+          <div id="arrival-info-output"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右下固定の OPERATION ボタン -->
+  <div id="operation-panel">
+    <button id="operation-button">OPERATION</button>
+    <div id="operation-ui" class="hidden">
+      <h3>操作メニュー</h3>
+      <button id="reset-products">商品情報リセット</button>
+      <button id="reset-arrival">到着・遅延情報リセット</button>
+      <div class="operation-location-buttons">
+        <button id="op-up-button">UP</button>
+        <button id="op-down-button">DOWN</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="script.js" type="module"></script>
+</body>
+</html>
