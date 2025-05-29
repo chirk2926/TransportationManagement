@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>在庫管理システム</title>
+  <style>
+    /* ベーススタイル */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    /* 検索ボックス */
+    #searchInput {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    /* フォームのスタイル */
+    form {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      box-shadow: 0px 2px 4px rgba(0,0,0,0.1);
+    }
+    form label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    form input[type="text"],
+    form input[type="number"] {
+      width: 95%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    form button {
+      background: #007BFF;
+      border: none;
+      color: #fff;
+      padding: 10px 20px;
+      margin-right: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    form button:hover {
+      background: #0056bf;
+    }
+    /* テーブルのスタイル */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-bottom: 20px;
+    }
+    table th, table td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    table th {
+      background: #007BFF;
+      color: #fff;
+    }
+    .action-buttons button {
+      background: #28a745;
+      border: none;
+      padding: 5px 10px;
+      color: #fff;
+      margin-right: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .action-buttons button.delete {
+      background: #dc3545;
+    }
+    .action-buttons button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>在庫管理システム</h1>
+    
+    <!-- 検索ボックス -->
+    <input type="text" id="searchInput" placeholder="商品名で検索">
+
+    <!-- アイテム追加／更新フォーム -->
+    <form id="inventoryForm">
+      <!-- 編集モード用の隠しフィールド -->
+      <input type="hidden" id="itemId" value="">
+      <label for="itemName">商品名</label>
+      <input type="text" id="itemName" required placeholder="商品名を入力">
+      
+      <label for="itemQuantity">在庫数</label>
+      <input type="number" id="itemQuantity" required placeholder="在庫数を入力">
+      
+      <label for="itemPrice">価格</label>
+      <input type="number" id="itemPrice" required placeholder="価格を入力">
+      
+      <button type="submit" id="submitButton">追加</button>
+      <button type="button" id="resetButton">リセット</button>
+    </form>
+
+    <!-- 在庫一覧テーブル -->
+    <table id="inventoryTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>商品名</th>
+          <th>在庫数</th>
+          <th>価格</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- JavaScriptで各商品の行を生成 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // 在庫データはオブジェクトの配列として管理
+    let inventory = [];
+    let editing = false;
+
+    // DOMエレメントの取得
+    const inventoryForm = document.getElementById('inventoryForm');
+    const itemIdInput = document.getElementById('itemId');
+    const itemNameInput = document.getElementById('itemName');
+    const itemQuantityInput = document.getElementById('itemQuantity');
+    const itemPriceInput = document.getElementById('itemPrice');
+    const submitButton = document.getElementById('submitButton');
+    const resetButton = document.getElementById('resetButton');
+    const inventoryTableBody = document.querySelector('#inventoryTable tbody');
+    const searchInput = document.getElementById('searchInput');
+
+    // 在庫をlocalStorageから読み込む（なければサンプルデータを設定）
+    function loadInventory() {
+      const storedInventory = localStorage.getItem('inventory');
+      if (storedInventory) {
+        inventory = JSON.parse(storedInventory);
+      } else {
+        // サンプルデータ
+        inventory = [
+          { id: 1, name: 'ノートパソコン', quantity: 10, price: 120000 },
+          { id: 2, name: 'スマートフォン', quantity: 20, price: 80000 },
+          { id: 3, name: 'タブレット', quantity: 15, price: 60000 }
+        ];
+        saveInventory();
+      }
+    }
+
+    // 在庫データをlocalStorageに保存する
+    function saveInventory() {
+      localStorage.setItem('inventory', JSON.stringify(inventory));
+    }
+
+    // テーブルに在庫データを表示する関数
+    function renderInventory(filter = '') {
+      inventoryTableBody.innerHTML = '';
+      let filteredInventory = inventory;
+      if (filter.trim() !== '') {
+        filteredInventory = inventory.filter(item =>
+          item.name.includes(filter)
+        );
+      }
+
+      filteredInventory.forEach(item => {
+        const row = document.createElement('tr');
+
+        // ID列
+        const idCell = document.createElement('td');
+        idCell.textContent = item.id;
+        row.appendChild(idCell);
+
+        // 商品名列
+        const nameCell = document.createElement('td');
+        nameCell.textContent = item.name;
+        row.appendChild(nameCell);
+
+        // 在庫数列
+        const quantityCell = document.createElement('td');
+        quantityCell.textContent = item.quantity;
+        row.appendChild(quantityCell);
+
+        // 価格列
+        const priceCell = document.createElement('td');
+        priceCell.textContent = item.price;
+        row.appendChild(priceCell);
+
+        // 操作列（編集、削除ボタン）
+        const actionCell = document.createElement('td');
+        actionCell.classList.add('action-buttons');
+        
+        const editButton = document.createElement('button');
+        editButton.textContent = '編集';
+        editButton.addEventListener('click', () => {
+          populateFormForEdit(item);
+        });
+        
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = '削除';
+        deleteButton.classList.add('delete');
+        deleteButton.addEventListener('click', () => {
+          deleteItem(item.id);
+        });
+        
+        actionCell.appendChild(editButton);
+        actionCell.appendChild(deleteButton);
+        row.appendChild(actionCell);
+
+        inventoryTableBody.appendChild(row);
+      });
+    }
+
+    // 編集モードにするためフォームに既存データをセット
+    function populateFormForEdit(item) {
+      editing = true;
+      itemIdInput.value = item.id;
+      itemNameInput.value = item.name;
+      itemQuantityInput.value = item.quantity;
+      itemPriceInput.value = item.price;
+      submitButton.textContent = '更新';
+    }
+
+    // フォームをリセットし、通常モードに戻す
+    function resetForm() {
+      editing = false;
+      inventoryForm.reset();
+      itemIdInput.value = '';
+      submitButton.textContent = '追加';
+    }
+
+    // フォーム送信時の処理（追加または更新）
+    inventoryForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const name = itemNameInput.value.trim();
+      const quantity = parseInt(itemQuantityInput.value);
+      const price = parseInt(itemPriceInput.value);
+
+      if (editing) {
+        // 更新処理
+        const id = parseInt(itemIdInput.value);
+        const index = inventory.findIndex(item => item.id === id);
+        if (index !== -1) {
+          inventory[index].name = name;
+          inventory[index].quantity = quantity;
+          inventory[index].price = price;
+        }
+      } else {
+        // 新規追加処理（IDは自動採番）
+        const newId = inventory.length > 0 ? Math.max(...inventory.map(item => item.id)) + 1 : 1;
+        const newItem = { id: newId, name, quantity, price };
+        inventory.push(newItem);
+      }
+      saveInventory();
+      renderInventory(searchInput.value);
+      resetForm();
+    });
+
+    // アイテムを削除
+    function deleteItem(id) {
+      if (confirm('本当に削除しますか？')) {
+        inventory = inventory.filter(item => item.id !== id);
+        saveInventory();
+        renderInventory(searchInput.value);
+      }
+    }
+
+    // 検索機能：テキスト入力に応じて在庫一覧をフィルタリング
+    searchInput.addEventListener('input', function(event) {
+      renderInventory(event.target.value);
+    });
+
+    // リセットボタン
+    resetButton.addEventListener('click', resetForm);
+
+    // 初期化処理
+    loadInventory();
+    renderInventory();
+  </script>
+</body>
+</html>
