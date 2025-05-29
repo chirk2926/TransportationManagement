@@ -1,0 +1,78 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+#main-container {
+  display: flex;
+  gap: 20px;
+}
+
+/* 左側の運送状況エリア */
+#transport-container {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+/* 右側の商品・到着情報エリア */
+#product-container {
+  flex: 1;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+/* 輸送経路の各拠点を円として表現 */
+.route-step {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: black;
+  color: white;
+  text-align: center;
+  line-height: 40px;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+/* 現在位置の円は中を赤色で塗りつぶし（背景色が red ） */
+.route-step.current {
+  background-color: red;
+}
+
+/* 非表示用のクラス */
+.hidden {
+  display: none;
+}
+
+/* 右下固定のOPERATIONパネル */
+#operation-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
+
+#operation-ui {
+  border: 1px solid #ccc;
+  background-color: #fff;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+/* 商品画像およびアップロードプレビュー */
+#product-image-display img,
+#image-preview img {
+  max-width: 100%;
+  margin-top: 10px;
+}
+
+label {
+  display: block;
+  margin: 10px 0;
+}
+
+button {
+  margin: 5px;
+  padding: 5px 10px;
+}
